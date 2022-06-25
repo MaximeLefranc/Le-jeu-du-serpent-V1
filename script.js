@@ -3,9 +3,9 @@ window.onload = function()
     var canvas 
     var canvasWidth = 900
     var canvasHeight = 600
-    var blockSize = 10
+    var blockSize = 30
     var ctx
-    var delay = 150
+    var delay = 100
     var snakee
     var applee
     var widthInBlocks = canvasWidth/blockSize
@@ -36,6 +36,15 @@ window.onload = function()
         }
         else
         {
+            if(snakee.isEatingApple(applee))
+            {
+                snakee.ateApple = true
+                do
+                {
+                    applee.setNewPosition()
+                }
+                while(applee.isOnSnake(snakee))
+            }
             ctx.clearRect(0,0,canvasWidth,canvasHeight)
             snakee.draw()
             applee.draw()
@@ -54,6 +63,7 @@ window.onload = function()
     {
         this.body = body
         this.direction = direction
+        this.ateApple = false
         this.draw = function()
         {
             ctx.save()
@@ -86,7 +96,14 @@ window.onload = function()
                     throw("Invalid Direction")
             }
             this.body.unshift(nextPosition)
-            this.body.pop()
+            if(!this.ateApple)
+            {
+                this.body.pop()
+            }
+            else
+            {
+                this.ateApple = false
+            }
         }
         this.setDirection = function(newDirection)
         {
@@ -139,6 +156,18 @@ window.onload = function()
 
             return wallCollision || snakeCollision
         }
+        this.isEatingApple = function(appleToEat)
+        {
+            var head = this.body[0]
+            if(head[0] === appleToEat.position[0] && head[1] === appleToEat.position[1])
+            {
+                return true
+            }
+            else
+            {
+                return false
+            }
+        }
     }
 
     function Apple(position)
@@ -150,20 +179,38 @@ window.onload = function()
             ctx.fillStyle = "#33cc33"
             ctx.beginPath()
             var radius = blockSize/2
-            var x = position[0] * blockSize + radius
-            var y = position[1] * blockSize + radius
+            var x = this.position[0] * blockSize + radius
+            var y = this.position[1] * blockSize + radius
             ctx.arc(x,y,radius,0,Math.PI*2, true)
             ctx.fill()
             ctx.restore()
         }
+        this.setNewPosition = function()
+        {
+            var newX = Math.round(Math.random() * (widthInBlocks - 1))
+            var newY = Math.round(Math.random() * (heightInBlocks -1))
+            this.position = [newX, newY]
+        }
+        this.isOnSnake = function(snakeToCheck)
+        {
+            var isOnSnake = false
+            for(var i = [0] ; i < snakeToCheck.body.length; i ++)
+            {
+                if(this.position[0] === snakeToCheck.body[i][0] && this.position[1] === snakeToCheck.body[i][1])
+                {
+                    isOnSnake = true
+                }
+            }
+            return isOnSnake
+        }
     }
 
 
-document.onkeydown = function handleKeyDown(e)
+ document.onkeydown = function handleKeyDown(e)
     {
-        var key = e.keyCode
-        var newDirection
-        switch(key)
+    var key = e.keyCode
+    var newDirection
+    switch(key)
         {
         case 37 :
             newDirection = "left"
@@ -180,6 +227,6 @@ document.onkeydown = function handleKeyDown(e)
         default:
             return
         }
- snakee.setDirection(newDirection)
+    snakee.setDirection(newDirection)
     }
 }
